@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
 
-namespace dBanking.CustomerOnbaording.API.Middlewares
+namespace dBanking.CustomerOnboarding.API.Middlewares
 {
     // You may need to install the Microsoft.AspNetCore.Http.Abstractions package into your project
     public class ExceptionHandellingMW

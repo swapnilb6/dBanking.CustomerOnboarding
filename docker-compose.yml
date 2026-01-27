@@ -1,4 +1,3 @@
-
 version: "3.9"
 
 networks:
@@ -22,12 +21,12 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
+      # Map container 5432 to host ${POSTGRES_PORT} (use 5433 in .env to avoid conflict)
       - "${POSTGRES_PORT}:5432"
     volumes:
       - op1-postgres-data:/var/lib/postgresql/data
       - ./db-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      # Use container-local address; keep it fast but robust
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1"]
       interval: 5s
       timeout: 3s
@@ -59,7 +58,7 @@ services:
   op1-cust-onboarding-api:
     build:
       context: .
-      dockerfile: dBanking.CustomerOnbaording.API/Dockerfile
+      dockerfile: dBanking.CustomerOnboarding.API/Dockerfile  
     container_name: op1-cust-onboarding-api
     depends_on:
       op1-postgres:
@@ -70,10 +69,10 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: http://0.0.0.0:9090
 
-      # Swagger redirect unified to localhost using your host-exposed API port
+      # Swagger redirect (host-exposed API port)
       Swagger__RedirectUri: http://localhost:${API_HTTP_PORT}/swagger/oauth2-redirect.html
 
-      # Postgres
+      # Postgres (app will connect via service name inside Docker network)
       DB_HOST: op1-postgres
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB}
@@ -84,8 +83,7 @@ services:
       # Dev-only: apply EF migrations automatically on startup
       APPLY_MIGRATIONS: "true"
 
-
-      # RabbitMQ (envs used by Program.cs)
+      # RabbitMQ
       RABBITMQ_HOST: op1-rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_VHOST: /
@@ -100,7 +98,11 @@ services:
       - "${API_HTTP_PORT}:9090"
 
     healthcheck:
+      # Requires curl in the container (see Dockerfile fix below)
       test: ["CMD-SHELL", "curl -fsS http://localhost:9090/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 10
+
+    networks:
+      - op1-net

@@ -1,11 +1,10 @@
-using Core;
-using Infrastructure;
+
 using Core.Mappers;
 using Core.RepositoryContracts;
 using Core.ServiceContracts;
 using Core.Services;
 using dBanking.Core.Services;
-using dBanking.CustomerOnbaording.API.Middlewares;
+using dBanking.CustomerOnboarding.API.Middlewares;
 using API.Consumers;
 using FluentValidation.AspNetCore; // Add this using directive
 using Infrastructure.DbContext;

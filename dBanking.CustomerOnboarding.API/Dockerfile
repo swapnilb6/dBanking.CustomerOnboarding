@@ -1,30 +1,32 @@
-# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-
-# This stage is used when running from VS in fast mode (Default for Debug configuration)
+# Base runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+# Expose port that the app actually listens on
+EXPOSE 9090
 
+# Install curl for healthcheck (small, but required by compose healthcheck)
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# This stage is used to build the service project
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["dBanking.CustomerOnboarding.API/dBanking.CustomerOnboarding.API.csproj", "dBanking.CustomerOnboarding.API/"]
-RUN dotnet restore "./dBanking.CustomerOnboarding.API/dBanking.CustomerOnboarding.API.csproj"
+RUN dotnet restore "dBanking.CustomerOnboarding.API/dBanking.CustomerOnboarding.API.csproj"
 COPY . .
 WORKDIR "/src/dBanking.CustomerOnboarding.API"
-RUN dotnet build "./dBanking.CustomerOnboarding.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "dBanking.CustomerOnboarding.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# This stage is used to publish the service project to be copied to the final stage
+# Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./dBanking.CustomerOnboarding.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "dBanking.CustomerOnboarding.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+# Final stage
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Run as root to avoid /keys volume permission issues in dev
+USER root
 ENTRYPOINT ["dotnet", "dBanking.CustomerOnboarding.API.dll"]

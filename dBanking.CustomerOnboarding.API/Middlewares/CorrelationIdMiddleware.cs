@@ -1,4 +1,4 @@
-﻿namespace dBanking.CustomerOnbaording.API.Middlewares
+﻿namespace dBanking.CustomerOnboarding.API.Middlewares
 {
     public sealed class CorrelationIdMiddleware
     {
