@@ -1,0 +1,76 @@
+
+version: "3.9"
+
+networks:
+  op1-net:
+    driver: bridge
+
+volumes:
+  op1-rabbitmq-data:
+  op1-rabbitmq-log:
+  data-protection-keys:
+
+services:
+  op1-rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: op1-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "${RABBITMQ_AMQP_PORT}:5672"
+      - "${RABBITMQ_HTTP_PORT}:15672"
+    volumes:
+      - op1-rabbitmq-data:/var/lib/rabbitmq/mnesia
+      - op1-rabbitmq-log:/var/log/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - op1-net
+
+  op1-cust-onboarding-api:
+    build:
+      context: .
+      dockerfile: dBanking.CustomerOnbaording.API/Dockerfile
+    container_name: op1-cust-onboarding-api
+    depends_on:
+      op1-rabbitmq:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: http://0.0.0.0:9090
+
+      Swagger__RedirectUri: http://localhost:5000/swagger/oauth2-redirect.html
+
+      # --- Use HOST Postgres (Ubuntu VM) ---
+      DB_HOST: host.docker.internal
+      DB_PORT: ${POSTGRES_PORT}          # e.g., 5433
+      DB_NAME: ${POSTGRES_DB}            # dBanking_CMS
+      DB_USER: ${POSTGRES_USER}          # postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}  # postgres
+      PG_INCLUDE_ERROR_DETAIL: ${PG_INCLUDE_ERROR_DETAIL}
+
+      # RabbitMQ (container)
+      RABBITMQ_HOST: op1-rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_VHOST: /
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USE_TLS: "false"
+    ports:
+      - "${API_HTTP_PORT}:9090"
+    volumes:
+      - data-protection-keys:/keys
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # maps to the Linux host from container
+    networks:
+      - op1-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9090/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10

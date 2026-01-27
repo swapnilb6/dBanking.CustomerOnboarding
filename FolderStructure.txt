@@ -1,0 +1,56 @@
+﻿Solution: dBanking.CustomerManagment  (4 projects)
+│
+├─ compose/
+│   └─ folderstructure.txt
+│
+├─ Customer Onboarding/
+│   ├─ dBanking.CmsOnboarding.Core/
+│   │   ├─ Dependencies/
+│   │   ├─ DTOS/
+│   │   ├─ Entities/
+│   │   ├─ Mappers/
+│   │   ├─ Messages/
+│   │   ├─ Repository Contracts/
+│   │   ├─ ServiceContracts/
+│   │   ├─ Services/
+│   │   └─ dependancyInjection.cs
+│   │
+│   ├─ dBanking.CmsOnboarding.Infrastructure/
+│   │   ├─ Dependencies/
+│   │   ├─ Imports/
+│   │   ├─ AppDbContext/
+│   │   ├─ bin/
+│   │   ├─ Configurations/
+│   │   ├─ docker/
+│   │   ├─ Migrations/
+│   │   ├─ obj/
+│   │   ├─ Repositories/
+│   │   └─ dependancyInjection.cs
+│   │
+│   ├─ dBanking.CmsOnboarding.Tests/
+│   │   ├─ Dependencies/
+│   │   ├─ Consumers/
+│   │   ├─ Controllers/
+│   │   ├─ Services/
+│   │   └─ TestUtils/
+│   │
+│   └─ dBanking.CustomerOnboarding.API/
+│       ├─ Connected Services/
+│       ├─ Dependencies/
+│       ├─ Properties/
+│       ├─ Consumers/
+│       ├─ Controllers/
+│       ├─ Middlewares/
+│       ├─ appsettings.json
+│       ├─ dependancyInjection.cs
+│       ├─ Dockerfile
+│       └─ Program.cs
+│
+├─ db-init/
+│   ├─ 01-create-role.sql
+│   └─ 02-create-db.sql
+│
+└─ Solution Items/
+    ├─ .env.op1
+    ├─ docker-compose.vm.yml
+    └─ docker-compose.yml
