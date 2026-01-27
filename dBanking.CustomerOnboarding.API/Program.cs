@@ -36,11 +36,26 @@ builder.Services.AddScoped<ICorrelationAccessor, HttpCorrelationAccessor>();
 builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 
-builder.WebHost.ConfigureKestrel((ctx, kestrel) =>
+
+
+var isInContainer = Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true";
+
+
+builder.WebHost.ConfigureKestrel((context, kestrel) =>
 {
-    // Bind HTTP only on 9090
-    kestrel.Listen(IPAddress.Any, 9090);
+    if (isInContainer)
+    {
+        // Docker port
+        kestrel.Listen(System.Net.IPAddress.Any, 9090);
+    }
+    else
+    {
+        // Local dev (VS IIS Express / Project)
+        kestrel.Listen(System.Net.IPAddress.Any, 5017);
+    }
 });
+
+
 
 // AuthN / AuthZ
 builder.Services

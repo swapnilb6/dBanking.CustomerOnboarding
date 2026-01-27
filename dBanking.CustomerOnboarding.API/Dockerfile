@@ -26,6 +26,8 @@ RUN dotnet publish "dBanking.CustomerOnboarding.API.csproj" -c $BUILD_CONFIGURAT
 # Final stage
 FROM base AS final
 WORKDIR /app
+ENV DOTNET_RUNNING_IN_CONTAINER=true
+EXPOSE 9090
 COPY --from=publish /app/publish .
 # Run as root to avoid /keys volume permission issues in dev
 USER root

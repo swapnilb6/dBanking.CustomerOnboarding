@@ -67,6 +67,7 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      DOTNET_RUNNING_IN_CONTAINER: "true"
       ASPNETCORE_URLS: http://0.0.0.0:9090
 
       # Swagger redirect (host-exposed API port)
