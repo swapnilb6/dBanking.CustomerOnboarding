@@ -24,7 +24,7 @@ namespace dBanking.CustomerOnbaording.API.Controllers
         /// Requires scope: customer:write
         /// </summary>
         [HttpPost]
-        [Authorize(Policy = "App.write")]
+        //[Authorize(Policy = "App.write")]
         //[Authorize]
         public async Task<ActionResult<CustomerResponseDto>> CreateCustomer(
             [FromBody] CustomerCreateRequestDto dto,
@@ -107,7 +107,7 @@ namespace dBanking.CustomerOnbaording.API.Controllers
         /// Requires scope: customer:write
         /// </summary>
         [HttpPatch("{customerId:guid}")]
-        [Authorize(Policy = "App.write")]
+        //[Authorize(Policy = "App.write")]
         //[Authorize]
         public async Task<ActionResult<CustomerResponseDto>> UpdateCustomer(
             Guid customerId,
