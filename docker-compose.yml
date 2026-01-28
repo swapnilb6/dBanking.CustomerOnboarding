@@ -69,7 +69,7 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       DOTNET_RUNNING_IN_CONTAINER: "true"
       ASPNETCORE_URLS: http://0.0.0.0:9090
-
+      APPLY_MIGRATIONS: "true"
       # Swagger redirect (host-exposed API port)
       Swagger__RedirectUri: http://localhost:${API_HTTP_PORT}/swagger/oauth2-redirect.html
 
