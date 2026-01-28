@@ -28,7 +28,6 @@
 
 	<ItemGroup>
 	  <Folder Include="docker\" />
-	  <Folder Include="Migrations\" />
 	</ItemGroup>
 
 </Project>
