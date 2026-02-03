@@ -6,39 +6,54 @@ using Core.Entities;
 namespace Infrastructure.Configurations;
 public sealed class AuditRecordEntityTypeConfiguration : IEntityTypeConfiguration<AuditRecord>
 {
-    public void Configure(EntityTypeBuilder<AuditRecord> b)
+    public void Configure(EntityTypeBuilder<AuditRecord> e)
     {
-        b.ToTable("AuditRecords", schema: "public");
+        e.ToTable("AuditRecords");
 
+        e.HasKey(x => x.AuditRecordId);
 
-        // Map PK property to existing column name "AuditId"
-        b.HasKey(x => x.AuditRecordId);
-        b.Property(x => x.AuditRecordId).HasColumnName("AuditId");
+        e.Property(x => x.EntityType)
+         .IsRequired();
 
-        b.Property(x => x.EntityType).HasColumnName("EntityType").HasMaxLength(100);
+        // Explicitly store enum as int (EF does this by default, but we make it explicit)
+        e.Property(x => x.Action)
+         .HasConversion<int>()
+         .IsRequired();
 
-        // Store enum as int in the DB (matches existing integer column)
-        b.Property(x => x.Action)
-            .HasColumnName("Action")
-            .HasConversion<int>();   // <-- important
+        e.Property(x => x.TargetEntityId)
+         .IsRequired(false);
 
-        b.Property(x => x.Actor).HasColumnName("Actor").HasMaxLength(200);
-        b.Property(x => x.CorrelationId).HasColumnName("CorrelationId").HasMaxLength(100);
-        b.Property(x => x.Timestamp).HasColumnName("Timestamp");
-        b.Property(x => x.BeforeJson).HasColumnName("BeforeJson").HasColumnType("jsonb");
-        b.Property(x => x.AfterJson).HasColumnName("AfterJson").HasColumnType("jsonb");
+        e.Property(x => x.RelatedEntityId)
+         .IsRequired(false);
 
-        b.Property(x => x.TargetEntityId).HasColumnName("TargetEntityId");
-        b.Property(x => x.RelatedEntityId).HasColumnName("RelatedEntityId");
-        b.Property(x => x.Source).HasColumnName("Source").HasMaxLength(50);
-        b.Property(x => x.Environment).HasColumnName("Environment").HasMaxLength(20);
+        e.Property(x => x.Actor)
+         .HasMaxLength(256)
+         .IsRequired();
 
+        e.Property(x => x.CorrelationId)
+         .IsRequired(false);
 
-        // Indexes (optional)
-        b.HasIndex(x => new { x.EntityType, x.TargetEntityId });
-        b.HasIndex(x => x.Timestamp);
-        b.HasIndex(x => x.CorrelationId);
-        b.HasIndex(x => x.Action);
+        // DateTimeOffset -> timestamptz
+        e.Property(x => x.Timestamp)
+         .IsRequired();
 
+        // JSON as jsonb, nullable
+        e.Property(x => x.BeforeJson)
+         .HasColumnType("jsonb")
+         .IsRequired(false);
+
+        e.Property(x => x.AfterJson)
+         .HasColumnType("jsonb")
+         .IsRequired(false);
+
+        e.Property(x => x.Source)
+         .IsRequired(false);
+
+        e.Property(x => x.Environment)
+         .IsRequired(false);
+
+        e.HasIndex(x => new { x.EntityType, x.TargetEntityId, x.Timestamp });
+        e.HasIndex(x => x.CorrelationId);
+        e.HasIndex(x => new { x.RelatedEntityId, x.Timestamp });
     }
 }

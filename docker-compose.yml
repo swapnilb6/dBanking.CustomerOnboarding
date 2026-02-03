@@ -82,7 +82,6 @@ services:
       PG_INCLUDE_ERROR_DETAIL: ${PG_INCLUDE_ERROR_DETAIL}
 
       # Dev-only: apply EF migrations automatically on startup
-      APPLY_MIGRATIONS: "true"
 
       # RabbitMQ
       RABBITMQ_HOST: op1-rabbitmq
