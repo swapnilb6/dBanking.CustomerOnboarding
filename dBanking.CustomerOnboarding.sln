@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		01-create-role.sql = 01-create-role.sql
 		02-create-db.sql = 02-create-db.sql
 		ARCHITECTURE.md = ARCHITECTURE.md
+		CompleteDBScript.sql = CompleteDBScript.sql
 		docker-compose.vm.yml = docker-compose.vm.yml
 		docker-compose.yml = docker-compose.yml
 		FolderStructure.txt = FolderStructure.txt
