@@ -10,7 +10,7 @@
     <DockerServiceName>dbanking.customeronboarding.api</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
-    <None Include=".env.op1 - Copy" />
+    <None Include=".env" />
     <None Include="docker-compose.override.yml">
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>

@@ -15,14 +15,14 @@ services:
     image: postgres:16
     container_name: op1-postgres
     restart: unless-stopped
+    env_file: .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      # Map container 5432 to host ${POSTGRES_PORT} (use 5433 in .env to avoid conflict)
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - op1-postgres-data:/var/lib/postgresql/data
       - ./db-init:/docker-entrypoint-initdb.d:ro
@@ -38,12 +38,13 @@ services:
     image: rabbitmq:3.13-management
     container_name: op1-rabbitmq
     restart: unless-stopped
+    env_file: .env
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
-      - "${RABBITMQ_AMQP_PORT}:5672"
-      - "${RABBITMQ_HTTP_PORT}:15672"
+      - "${RABBITMQ_AMQP_PORT:-5672}:5672"
+      - "${RABBITMQ_HTTP_PORT:-15672}:15672"
     volumes:
       - op1-rabbitmq-data:/var/lib/rabbitmq/mnesia
       - op1-rabbitmq-log:/var/log/rabbitmq
@@ -58,20 +59,19 @@ services:
   op1-cust-onboarding-api:
     build:
       context: .
-      dockerfile: dBanking.CustomerOnboarding.API/Dockerfile  
+      dockerfile: dBanking.CustomerOnboarding.API/Dockerfile
     container_name: op1-cust-onboarding-api
+    env_file: .env
     depends_on:
-      op1-postgres:
-        condition: service_healthy
-      op1-rabbitmq:
-        condition: service_healthy
+      - op1-postgres
+      - op1-rabbitmq
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       DOTNET_RUNNING_IN_CONTAINER: "true"
       ASPNETCORE_URLS: http://0.0.0.0:9090
       APPLY_MIGRATIONS: "true"
       # Swagger redirect (host-exposed API port)
-      Swagger__RedirectUri: http://localhost:${API_HTTP_PORT}/swagger/oauth2-redirect.html
+      Swagger__RedirectUri: "http://localhost:${API_HTTP_PORT:-9090}/swagger/oauth2-redirect.html"
 
       # Postgres (app will connect via service name inside Docker network)
       DB_HOST: op1-postgres
@@ -80,8 +80,6 @@ services:
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       PG_INCLUDE_ERROR_DETAIL: ${PG_INCLUDE_ERROR_DETAIL}
-
-      # Dev-only: apply EF migrations automatically on startup
 
       # RabbitMQ
       RABBITMQ_HOST: op1-rabbitmq
@@ -95,10 +93,9 @@ services:
       - data-protection-keys:/keys
 
     ports:
-      - "${API_HTTP_PORT}:9090"
+      - "${API_HTTP_PORT:-9090}:9090"
 
     healthcheck:
-      # Requires curl in the container (see Dockerfile fix below)
       test: ["CMD-SHELL", "curl -fsS http://localhost:9090/health || exit 1"]
       interval: 10s
       timeout: 3s
