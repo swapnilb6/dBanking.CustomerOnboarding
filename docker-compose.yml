@@ -89,6 +89,10 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
       RABBITMQ_USE_TLS: "false"
 
+      #Redis
+      REDIS_HOST: op1-redis
+      REDIS_PORT: 6379
+
     volumes:
       - data-protection-keys:/keys
 
@@ -101,5 +105,21 @@ services:
       timeout: 3s
       retries: 10
 
+    networks:
+      - op1-net
+
+  op1-redis:
+    container_name: op1-redis
+    image: redis:latest
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - C:/Users/QL132BZ/source/op1-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
     networks:
       - op1-net

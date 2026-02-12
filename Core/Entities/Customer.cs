@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Core.Entities
 {
@@ -36,6 +37,8 @@ namespace Core.Entities
         public DateTime? UpdatedAt { get; set; }
 
         // Relationships
+
+        [JsonIgnore]
         public List<KycCase> KycCases { get; set; } = new();
     }
 }

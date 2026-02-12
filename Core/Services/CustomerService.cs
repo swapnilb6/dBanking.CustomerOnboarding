@@ -1,12 +1,15 @@
 ﻿using AutoMapper;
+using Core.DTOS;
 using Core.Entities;
 using Core.Messages;
 using Core.RepositoryContracts;
 using Core.ServiceContracts;
 using MassTransit;
-using Core.DTOS;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Diagnostics.Metrics;
 using System.Security.Principal;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Core.Services
 {
@@ -24,11 +27,13 @@ namespace Core.Services
 
         private readonly IAuditService _audit;
         private readonly ICorrelationAccessor _corr;
-       
+        private readonly IDistributedCache _distributedCache;
+
         public CustomerService(ICustomerRepository customers, IMapper mapper, IPublishEndpoint publishEndpoint
             , IKycCaseService kycCases,
             IAuditService audit,
-            ICorrelationAccessor corr)
+            ICorrelationAccessor corr,
+            IDistributedCache distributedCache)
         {
             _customers = customers;
             _publish = publishEndpoint;
@@ -36,7 +41,7 @@ namespace Core.Services
             _mapper = mapper;
             _audit = audit;
             _corr = corr;
-
+            _distributedCache = distributedCache;
         }
 
         public async Task<Customer> CreateAsync(Customer input, string? idempotencyKey = null, CancellationToken ct = default)
@@ -107,14 +112,94 @@ namespace Core.Services
         }
 
 
-        public Task<Customer?> GetAsync(Guid customerId, CancellationToken ct = default)
+        public async Task<Customer?> GetAsync(Guid customerId, CancellationToken ct = default)
         {
-            return _customers.GetByIdAsync(customerId, ct);
+            string cacheKey = $"customer:{customerId}";
+
+            string? cachedValue = await _distributedCache.GetStringAsync(cacheKey);
+            
+            if (cachedValue != null)
+            {
+                return JsonSerializer.Deserialize<Customer>(cachedValue);
+            }
+
+            Customer? customer = await _customers.GetByIdAsync(customerId, ct);
+            if (customer != null)
+            {
+                DistributedCacheEntryOptions cacheOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30), // Cache for 30 minutes
+                    SlidingExpiration = TimeSpan.FromMinutes(10) // Reset expiration on access
+                };
+
+
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                };
+
+
+                await _distributedCache.SetStringAsync(cacheKey, JsonSerializer.Serialize(customer), cacheOptions);
+            }
+            return customer;
         }
 
-        public Task<Customer?> GetByEmailOrPhoneAsync(string? email, string? phone, CancellationToken ct = default)
+        public async Task<Customer?> GetByEmailOrPhoneAsync(string? email, string? phone, CancellationToken ct = default)
         {
-            return _customers.GetByEmailOrPhoneAsync(email, phone, ct);
+            // Try cache first if email provided
+            if (!string.IsNullOrEmpty(email))
+            {
+                string emailCacheKey = $"customer:email:{email}";
+                string? cachedValue = await _distributedCache.GetStringAsync(emailCacheKey, ct);
+                if (cachedValue != null)
+                {
+                    return JsonSerializer.Deserialize<Customer>(cachedValue);
+                }
+            }
+
+            // Try cache first if phone provided
+            if (!string.IsNullOrEmpty(phone))
+            {
+                string phoneCacheKey = $"customer:phone:{phone}";
+                string? cachedValue = await _distributedCache.GetStringAsync(phoneCacheKey, ct);
+                if (cachedValue != null)
+                {
+                    return JsonSerializer.Deserialize<Customer>(cachedValue);
+                }
+            }
+
+            // Fetch from repository
+            Customer? customer = await _customers.GetByEmailOrPhoneAsync(email, phone, ct);
+            
+            if (customer != null)
+            {
+                var cacheOptions = new DistributedCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30),
+                    SlidingExpiration = TimeSpan.FromMinutes(10)
+                };
+
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                };
+
+                string serialized = JsonSerializer.Serialize(customer, options);
+
+                // Cache by email if available
+                if (!string.IsNullOrEmpty(email))
+                {
+                    await _distributedCache.SetStringAsync($"customer:email:{email}", serialized, cacheOptions, ct);
+                }
+
+                // Cache by phone if available
+                if (!string.IsNullOrEmpty(phone))
+                {
+                    await _distributedCache.SetStringAsync($"customer:phone:{phone}", serialized, cacheOptions, ct);
+                }
+            }
+
+            return customer;
         }
 
         public async Task<Customer> UpdateAsync(Customer customer, CancellationToken ct = default)

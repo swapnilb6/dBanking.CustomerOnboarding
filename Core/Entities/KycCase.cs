@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 namespace Core.Entities
 {
     public class KycCase
@@ -11,6 +12,7 @@ namespace Core.Entities
         public Guid CustomerId { get; set; }
 
         // Navigation back to Customer
+        [JsonIgnore]
         public Customer Customer { get; set; } = default!;
 
         [Required]

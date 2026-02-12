@@ -215,4 +215,10 @@ VALUES
    '{"customerId":"99998888-7777-6666-5555-444433332222","status":2}'::jsonb,
    'API','Development');
 
+
+   
+ALTER TABLE "KycCases" 
+RENAME COLUMN "EvidenceRefsJson" TO "EvidenceRefs";
+
+
 COMMIT;

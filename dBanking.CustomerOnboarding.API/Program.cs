@@ -238,6 +238,12 @@ builder.Services.AddHealthChecks()
 
 // .AddRabbitMQ($"amqp://{mqUser}:{mqPass}@{mqHost}:{mqPort}{mqVh}", name: "rabbitmq");
 
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "op1-redis:6379"; // Update with your Redis configuration
+    options.InstanceName = "dBankingCache_";
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
