@@ -1,4 +1,4 @@
-version: "3.9"
+# Compose spec: version key not needed (deprecated)
 
 networks:
   op1-net:
@@ -9,6 +9,7 @@ volumes:
   op1-rabbitmq-data:
   op1-rabbitmq-log:
   data-protection-keys:
+  op1-redis-data:   # added if you want a portable Redis data volume
 
 services:
   op1-postgres:
@@ -56,6 +57,26 @@ services:
     networks:
       - op1-net
 
+  op1-redis:
+    image: redis:7-alpine
+    container_name: op1-redis
+    restart: unless-stopped
+    # Keep ports only if you need to access from host for debugging
+    # ports:
+    #   - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - op1-redis-data:/data
+      # If you truly run on Windows host, you can use:
+      # - C:/Users/QL132BZ/source/op1-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks:
+      - op1-net
+
   op1-cust-onboarding-api:
     build:
       context: .
@@ -63,17 +84,22 @@ services:
     container_name: op1-cust-onboarding-api
     env_file: .env
     depends_on:
-      - op1-postgres
-      - op1-rabbitmq
+      op1-postgres:
+        condition: service_healthy
+      op1-rabbitmq:
+        condition: service_healthy
+      op1-redis:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       DOTNET_RUNNING_IN_CONTAINER: "true"
       ASPNETCORE_URLS: http://0.0.0.0:9090
       APPLY_MIGRATIONS: "true"
-      # Swagger redirect (host-exposed API port)
-      Swagger__RedirectUri: "http://localhost:${API_HTTP_PORT:-9090}/swagger/oauth2-redirect.html"
 
-      # Postgres (app will connect via service name inside Docker network)
+      # Swagger redirect (host-exposed API port; default 5000)
+      Swagger__RedirectUri: "http://localhost:${API_HTTP_PORT:-5000}/swagger/oauth2-redirect.html"
+
+      # Postgres (service DNS inside Docker network)
       DB_HOST: op1-postgres
       DB_PORT: 5432
       DB_NAME: ${POSTGRES_DB}
@@ -97,7 +123,7 @@ services:
       - data-protection-keys:/keys
 
     ports:
-      - "${API_HTTP_PORT:-9090}:9090"
+      - "${API_HTTP_PORT:-5000}:9090"   # host 5000 -> container 9090
 
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:9090/health || exit 1"]
@@ -108,18 +134,26 @@ services:
     networks:
       - op1-net
 
-  op1-redis:
-    container_name: op1-redis
-    image: redis:latest
-    restart: unless-stopped
+  op1-apigateway:
+    image: op1-apigateway:latest
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    container_name: op1-gateway
+    depends_on:
+      op1-cust-onboarding-api:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      # Provide JWT settings if required by your Program.cs:
+      # Jwt__Authority: ${JWT_AUTHORITY}
+      # Jwt__Audience: ${JWT_AUDIENCE}
     ports:
-      - "6379:6379"
-    volumes:
-      - C:/Users/QL132BZ/source/op1-redis-data:/data
+      - "8080:8080"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 15
+      test: ["CMD", "curl", "-f", "http://localhost:8080/onboarding/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
     networks:
       - op1-net

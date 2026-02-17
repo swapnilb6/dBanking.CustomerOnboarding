@@ -216,7 +216,7 @@ var pgDetail = Environment.GetEnvironmentVariable("PG_INCLUDE_ERROR_DETAIL") == 
 var connString = $"Host={pgHost};Port={pgPort};Database={pgDb};Username={pgUser};Password={pgPass};Include Error Detail={pgDetail}";
 
 builder.Services.AddDbContext<AppPostgresDbContext>(options =>
-    options.UseNpgsql(connString));
+    options.UseNpgsql(connString, o => o.CommandTimeout(30)));
 
 
 builder.Services.AddHealthChecks()

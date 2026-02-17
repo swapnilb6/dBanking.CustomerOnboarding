@@ -18,7 +18,8 @@ namespace Infrastructure.Repositories
         {
             // Include KYC cases if you frequently need them; keep it selective to avoid heavy loads.
             return await _db.Customers
-                .Include(c => c.KycCases)
+                //.Include(c => c.KycCases)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.CustomerId == customerId, ct);
         }
 

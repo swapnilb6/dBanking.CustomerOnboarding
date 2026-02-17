@@ -70,7 +70,12 @@ namespace dBanking.CustomerOnbaording.API.Controllers
         //[Authorize]
         public async Task<ActionResult<CustomerResponseDto>> GetCustomerById(Guid customerId, CancellationToken ct)
         {
-            var entity = await _customers.GetAsync(customerId, ct);
+
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            cts.CancelAfter(TimeSpan.FromSeconds(30)); // app-level timeout
+
+            var entity = await _customers.GetAsync(customerId, cts.Token);
             if (entity is null) return NotFound();
 
             var response = ToCustomerResponseDto(entity);

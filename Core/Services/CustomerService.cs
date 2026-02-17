@@ -122,8 +122,18 @@ namespace Core.Services
             {
                 return JsonSerializer.Deserialize<Customer>(cachedValue);
             }
+            Customer? customer = null;
+            try
+            {
 
-            Customer? customer = await _customers.GetByIdAsync(customerId, ct);
+                 customer = await _customers.GetByIdAsync(customerId, ct);
+            }
+            catch (OperationCanceledException oce) when (ct.IsCancellationRequested)
+            {
+                // client aborted or gateway timed out
+                //return StatusCode(499); // Client Closed Request (nginx convention) or 408/504
+                throw;
+            }
             if (customer != null)
             {
                 DistributedCacheEntryOptions cacheOptions = new DistributedCacheEntryOptions

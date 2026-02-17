@@ -1,0 +1,202 @@
+{
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:9090",
+    "RequestIdKey": "X-Correlation-ID",
+    "DownstreamScheme": "http"
+  },
+  "Routes": [
+    // ------------------ Customers ------------------
+    {
+      "RouteId": "CreateCustomer",
+      "DownstreamPathTemplate": "/api/customers",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/customers",
+      "UpstreamHttpMethod": [ "Post" ],
+      //"AuthenticationOptions": {
+      //  "AuthenticationProviderKey": "Bearer",
+      //  "AllowedScopes": [ "customer:write" ]
+      //},
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 120
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 3000
+      },
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+    },
+    {
+      "RouteId": "GetCustomerById",
+      "DownstreamPathTemplate": "/api/customers/{customerId}",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/customers/{customerId}",
+      "UpstreamHttpMethod": [ "Get" ],
+      //"AuthenticationOptions": {
+      //  "AuthenticationProviderKey": "Bearer",
+      //  "AllowedScopes": [ "customer:read" ]
+      //},
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 300
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 30000
+      },
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+    },
+    {
+      "RouteId": "QueryCustomers", // e.g., /customers?email=abc@x.com
+      "DownstreamPathTemplate": "/api/customers",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/customers",
+      "UpstreamHttpMethod": [ "Get" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": [ "customer:read" ]
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 300
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 3000
+      },
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+    },
+
+    // ------------------ KYC ------------------
+    {
+      "RouteId": "CreateKycCase",
+      "DownstreamPathTemplate": "/api/kyc/cases",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/kyc/cases",
+      "UpstreamHttpMethod": [ "Post" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": [ "kyc:write" ]
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 120
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 3000
+      },
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+    },
+    {
+      "RouteId": "UpdateKycStatus",
+      "DownstreamPathTemplate": "/api/kyc/cases/{caseId}/status",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/kyc/cases/{caseId}/status",
+      "UpstreamHttpMethod": [ "Put" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": [ "kyc:write" ]
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 120
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 3000
+      },
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+    },
+    {
+      "RouteId": "GetKycCase",
+      "DownstreamPathTemplate": "/api/kyc/cases/{caseId}",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/kyc/cases/{caseId}",
+      "UpstreamHttpMethod": [ "Get" ],
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer",
+        "AllowedScopes": [ "customer:read" ] // or a dedicated kyc:read if you add it later
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "Limit": 300
+      },
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 5,
+        "DurationOfBreak": 10,
+        "TimeoutValue": 3000
+      },
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+    },
+
+    // ------------------ Infra / Utilities ------------------
+    {
+      "RouteId": "OnboardingHealth",
+      "DownstreamPathTemplate": "/health",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/onboarding/health",
+      "UpstreamHttpMethod": [ "Get" ],
+      "RateLimitOptions": { "EnableRateLimiting": false }
+    },
+    {
+      "RouteId": "OnboardingSwagger",
+      "DownstreamPathTemplate": "/swagger/index.html",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "op1-cust-onboarding-api",
+          "Port": 9090
+        }
+      ],
+      "UpstreamPathTemplate": "/_internal/onboarding/swagger",
+      "UpstreamHttpMethod": [ "Get" ],
+      "RateLimitOptions": { "EnableRateLimiting": false }
+    }
+  ]
+}
