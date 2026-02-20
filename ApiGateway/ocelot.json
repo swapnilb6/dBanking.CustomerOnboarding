@@ -15,7 +15,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/customers",
+      "UpstreamPathTemplate": "/gateway/customers",
       "UpstreamHttpMethod": [ "Post" ],
       //"AuthenticationOptions": {
       //  "AuthenticationProviderKey": "Bearer",
@@ -42,7 +42,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/customers/{customerId}",
+      "UpstreamPathTemplate": "/gateway/customers/{customerId}",
       "UpstreamHttpMethod": [ "Get" ],
       //"AuthenticationOptions": {
       //  "AuthenticationProviderKey": "Bearer",
@@ -58,10 +58,11 @@
         "DurationOfBreak": 10,
         "TimeoutValue": 30000
       },
-      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" },
+      "FileCacheOptions": { "TtlSeconds": 30 }
     },
     {
-      "RouteId": "QueryCustomers", // e.g., /customers?email=abc@x.com
+      "RouteId": "QueryCustomers",
       "DownstreamPathTemplate": "/api/customers",
       "DownstreamHostAndPorts": [
         {
@@ -69,7 +70,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/customers",
+      "UpstreamPathTemplate": "/gateway/customers",
       "UpstreamHttpMethod": [ "Get" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
@@ -85,7 +86,8 @@
         "DurationOfBreak": 10,
         "TimeoutValue": 3000
       },
-      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" },
+      "FileCacheOptions": { "TtlSeconds": 30 }
     },
 
     // ------------------ KYC ------------------
@@ -98,7 +100,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/kyc/cases",
+      "UpstreamPathTemplate": "/gateway/kyc/cases",
       "UpstreamHttpMethod": [ "Post" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
@@ -111,7 +113,7 @@
       },
       "QoSOptions": {
         "ExceptionsAllowedBeforeBreaking": 5,
-        "DurationOfBreak": 10,
+        "DurationOfBreak": 100000,
         "TimeoutValue": 3000
       },
       "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
@@ -125,7 +127,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/kyc/cases/{caseId}/status",
+      "UpstreamPathTemplate": "/gateway/kyc/cases/{caseId}/status",
       "UpstreamHttpMethod": [ "Put" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
@@ -134,11 +136,12 @@
       "RateLimitOptions": {
         "EnableRateLimiting": true,
         "Period": "1m",
-        "Limit": 120
+        "Limit": 120,
+        "PeriodTimespan": 20
       },
       "QoSOptions": {
         "ExceptionsAllowedBeforeBreaking": 5,
-        "DurationOfBreak": 10,
+        "DurationOfBreak": 100000,
         "TimeoutValue": 3000
       },
       "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
@@ -152,11 +155,11 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/kyc/cases/{caseId}",
+      "UpstreamPathTemplate": "/gateway/kyc/cases/{caseId}",
       "UpstreamHttpMethod": [ "Get" ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer",
-        "AllowedScopes": [ "customer:read" ] // or a dedicated kyc:read if you add it later
+        "AllowedScopes": [ "customer:read" ]
       },
       "RateLimitOptions": {
         "EnableRateLimiting": true,
@@ -168,7 +171,8 @@
         "DurationOfBreak": 10,
         "TimeoutValue": 3000
       },
-      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" }
+      "AddHeadersToDownstream": { "X-Correlation-ID": "{RequestId}" },
+      "FileCacheOptions": { "TtlSeconds": 30 }
     },
 
     // ------------------ Infra / Utilities ------------------
@@ -181,7 +185,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/onboarding/health",
+      "UpstreamPathTemplate": "/gateway/onboarding/health",
       "UpstreamHttpMethod": [ "Get" ],
       "RateLimitOptions": { "EnableRateLimiting": false }
     },
@@ -194,7 +198,7 @@
           "Port": 9090
         }
       ],
-      "UpstreamPathTemplate": "/_internal/onboarding/swagger",
+      "UpstreamPathTemplate": "/gateway/_internal/onboarding/swagger",
       "UpstreamHttpMethod": [ "Get" ],
       "RateLimitOptions": { "EnableRateLimiting": false }
     }
